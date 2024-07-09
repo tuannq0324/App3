@@ -10,14 +10,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -28,7 +26,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -36,12 +33,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.app3.R
 import com.example.app3.activity.MainViewModel
 import com.example.app3.activity.MainViewModelFactory
 import com.example.app3.activity.ViewState
-import com.example.app3.activity.activity1.MainActivity.Screens
+import com.example.app3.activity.mainactivity.MainActivity.Screens
 import com.example.app3.database.AppDatabase
 import com.example.app3.database.MainRepository
 import com.example.app3.model.ImageViewItem
@@ -194,35 +190,6 @@ fun ImageGrid(
                 }
             }
         })
-}
-
-//imageItem
-@Composable
-fun ItemImage(item: ImageViewItem, onItemClicked: (ImageViewItem) -> Unit) {
-    val drawableResource = if (item.isSelected) R.drawable.ic_tick else R.drawable.ic_untick
-
-    Box {
-        AsyncImage(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .clickable {
-                    onItemClicked.invoke(item)
-                },
-            model = item.item.qualityUrls?.thumb,
-            contentDescription = "",
-            contentScale = ContentScale.Crop
-        )
-
-        Image(
-            painterResource(id = drawableResource),
-            modifier = Modifier
-                .size(24.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .align(Alignment.BottomEnd),
-            contentDescription = "",
-        )
-    }
 }
 
 // Composable for error state
