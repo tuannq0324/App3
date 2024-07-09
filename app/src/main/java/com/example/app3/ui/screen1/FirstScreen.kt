@@ -1,10 +1,9 @@
-package com.example.app3.activity.view
+package com.example.app3.ui.screen1
 
-import android.content.Context
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,10 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -31,34 +27,22 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.example.app3.R
-import com.example.app3.activity.MainViewModel
-import com.example.app3.activity.MainViewModelFactory
-import com.example.app3.activity.ViewState
-import com.example.app3.activity.mainactivity.MainActivity.Screens
-import com.example.app3.database.AppDatabase
-import com.example.app3.database.MainRepository
 import com.example.app3.model.ImageViewItem
-import com.example.app3.utils.Constants.LOAD_MORE
-import com.example.app3.utils.Constants.LOAD_MORE_FAILED
+import com.example.app3.model.id
+import com.example.app3.ui.common.ItemImage
+import com.example.app3.ui.common.LoadMoreFailedItem
+import com.example.app3.ui.common.LoadMoreItem
+import com.example.app3.ui.viewmodel.ViewState
 
 @Composable
-fun MainScreen(navController: NavController, context: Context) {
-    // ViewModel instantiation - Good practice to use 'by viewModels()'
-    val mainViewModel = viewModel<MainViewModel>(
-        factory = MainViewModelFactory(
-            MainRepository(
-                AppDatabase.getInstance(context)
-            )
-        )
-    )
+fun FirstScreen(
+    viewModel: FirstViewModel, openSecondScreen: () -> Unit
+) {
 
-    // State for image items - Consider renaming for clarity
-    val imageItems = remember { mutableStateListOf<ImageViewItem>() }
+    val state by viewModel.viewState.collectAsStateWithLifecycle(initialValue = ViewState.Loading)
 
-    val state by mainViewModel.viewState.collectAsStateWithLifecycle(initialValue = ViewState.Loading)
+    val items by viewModel.imageViewItems.collectAsStateWithLifecycle(initialValue = emptyList())
 
     Column(
         modifier = Modifier
@@ -67,44 +51,37 @@ fun MainScreen(navController: NavController, context: Context) {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Data collection - Combine fetchData and collection
-        LaunchedEffect(key1 = Unit) { // Key ensures recomposition on config changes
-            mainViewModel.fetchData() // Fetch data when LaunchedEffect starts
-            mainViewModel.imageViewItems.collect { items ->
-                imageItems.clear()
-                imageItems.addAll(items)
-            }
-        }
 
-        when (state) {
-            ViewState.Loading -> {
-                // Loading state - No changes needed
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(text = "Loading", modifier = Modifier.padding(16.dp))
-                    CircularProgressIndicator()
+        Crossfade(
+            modifier = Modifier.weight(1f), targetState = state, label = ""
+        ) {
+            when (it) {
+                ViewState.Loading -> {
+                    // Loading state - No changes needed
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(text = "Loading", modifier = Modifier.padding(16.dp))
+                        CircularProgressIndicator()
+                    }
                 }
-            }
 
-            ViewState.Success -> {
-                // Success state - Extract item display logic to a separate composable
-                ImageGrid(
-                    context,
-                    imageItems,
-                    mainViewModel,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .padding(bottom = 16.dp)
-                )
-            }
+                ViewState.Success -> {
+                    ImageGrid(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp),
+                        items = items,
+                        onSelect = viewModel::updateSelect,
+                        onLoadMore = viewModel::loadMore
+                    )
+                }
 
-            ViewState.Failed, ViewState.Empty -> {
-                // Error/Empty states - Consolidate similar handling
-                ErrorState(onRetry = { mainViewModel.fetchData() })
+                ViewState.Failed, ViewState.Empty -> {
+                    ErrorState(onRetry = viewModel::fetchData)
+                }
             }
         }
 
@@ -112,7 +89,7 @@ fun MainScreen(navController: NavController, context: Context) {
         Button(modifier = Modifier
             .wrapContentWidth()
             .height(48.dp), onClick = {
-            navController.navigate(Screens.SecondScreen.route)
+            openSecondScreen()
         }) {
             Text(text = "Activity Second")
         }
@@ -122,71 +99,40 @@ fun MainScreen(navController: NavController, context: Context) {
 // Extracted composable for image grid display
 @Composable
 fun ImageGrid(
-    context: Context, items: List<ImageViewItem>, viewModel: MainViewModel, modifier: Modifier
+    modifier: Modifier,
+    items: List<ImageViewItem>,
+    onSelect: (ImageViewItem) -> Unit = {},
+    onLoadMore: () -> Unit = {}
 ) {
-
-    val isLoading = viewModel.isLoading.collectAsStateWithLifecycle(initialValue = false)
-
     LazyVerticalStaggeredGrid(modifier = modifier,
         columns = StaggeredGridCells.Fixed(2),
         verticalItemSpacing = 4.dp,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         state = rememberLazyStaggeredGridState(),
         content = {
-            items.forEach {
-                when (it.item.id) {
-                    LOAD_MORE -> {
-                        //load more
-                        item(
-                            key = it.item.id, content = {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(4.dp)
-                                ) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .height(48.dp)
-                                            .align(Alignment.Center)
-                                    )
-                                }
-                            }, span = StaggeredGridItemSpan.FullLine
-                        )
+            items.forEachIndexed { index, imageViewItem ->
+                when (imageViewItem) {
+                    is ImageViewItem.Image -> {
+                        item(key = imageViewItem.id) {
+                            ItemImage(item = imageViewItem, onItemClicked = onSelect)
+                        }
                     }
 
-                    LOAD_MORE_FAILED -> {
-                        item(key = it.item.id, content = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp)
-                                    .padding(4.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(text = context.getString(R.string.load_failed),
-                                    modifier = Modifier
-                                        .align(Alignment.Center)
-                                        .clickable {
-                                            viewModel.loadMore()
-                                        })
-                            }
-                        }, span = StaggeredGridItemSpan.FullLine)
+                    ImageViewItem.LoadMore -> {
+                        item(span = StaggeredGridItemSpan.FullLine) {
+                            LoadMoreItem()
+                        }
                     }
 
-                    else -> {
-                        item(key = it.item.id, content = {
-                            ItemImage(item = it) { item ->
-                                viewModel.updateSelect(item)
-                            }
-                        })
+                    ImageViewItem.LoadMoreFailed -> {
+                        item(span = StaggeredGridItemSpan.FullLine) {
+                            LoadMoreFailedItem(onLoadMore)
+                        }
                     }
                 }
-            }
-            item {
-                LaunchedEffect(key1 = true) {
-                    if (!isLoading.value) {
-                        viewModel.loadMore()
-                    }
+
+                if (index == items.size - 1) {
+                    onLoadMore()
                 }
             }
         })
