@@ -2,4 +2,4 @@ package com.example.app3.api
 
 const val BASE_URL = "https://api.unsplash.com/photos/?client_id="
 
-const val ACCESS_KEY = "Fa0tKw8scUPXqi1dM7-4FNf4DWkIsTgNewL5adCWAvo"
+const val ACCESS_KEY = "bbd2cdd943c795c2ea90230d1b04552168b1e4ddc81bd87d60f7bcac3ed53bf5"

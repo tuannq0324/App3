@@ -8,17 +8,20 @@ import androidx.room.PrimaryKey
 data class ImageEntity(
     @PrimaryKey
     @ColumnInfo("imageId")
-    var imageId: String,
-    @ColumnInfo("urlFull")
-    val urlFull: String?,
-    @ColumnInfo("urlRaw")
-    val urlRaw: String?,
-    @ColumnInfo("urlRegular")
-    val urlRegular: String?,
-    @ColumnInfo("urlSmall")
-    val urlSmall: String?,
-    @ColumnInfo("urlSmallS3")
-    val urlSmallS3: String?,
-    @ColumnInfo("urlThumb")
-    val urlThumb: String?,
+    val imageId: String,
+    @ColumnInfo("urls")
+    val qualityUrls: List<String>
+
+//    @ColumnInfo("urlFull")
+//    val urlFull: String?,
+//    @ColumnInfo("urlRaw")
+//    val urlRaw: String?,
+//    @ColumnInfo("urlRegular")
+//    val urlRegular: String?,
+//    @ColumnInfo("urlSmall")
+//    val urlSmall: String?,
+//    @ColumnInfo("urlSmallS3")
+//    val urlSmallS3: String?,
+//    @ColumnInfo("urlThumb")
+//    val urlThumb: String?,
 )
