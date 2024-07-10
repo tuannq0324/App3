@@ -21,7 +21,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -108,13 +107,11 @@ fun ImageGrid(
     onSelect: (ImageViewItem) -> Unit = {},
     onLoadMore: () -> Unit = {}
 ) {
-    val gridState = rememberLazyStaggeredGridState()
-
     LazyVerticalStaggeredGrid(modifier = modifier,
         columns = StaggeredGridCells.Fixed(2),
         verticalItemSpacing = 4.dp,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        state = gridState,
+        state = rememberLazyStaggeredGridState(),
         content = {
             items.forEach { imageViewItem ->
                 when (imageViewItem) {
@@ -136,20 +133,13 @@ fun ImageGrid(
                         }
                     }
                 }
-
-//                if (index == items.size - 1) {
-//                    onLoadMore()
-//                }
+            }
+            item(span = StaggeredGridItemSpan.FullLine) {
+                LaunchedEffect(key1 = true) {
+                    onLoadMore()
+                }
             }
         })
-
-    LaunchedEffect(gridState) {
-        snapshotFlow { gridState.layoutInfo.visibleItemsInfo }.collect { visibleItems ->
-            if (visibleItems.isNotEmpty() && visibleItems.last().index == gridState.layoutInfo.totalItemsCount - 1) {
-                onLoadMore()
-            }
-        }
-    }
 }
 
 // Composable for error state
@@ -171,7 +161,8 @@ fun ErrorState(onRetry: () -> Unit) {
             contentScale = ContentScale.Crop
         )
 
-        Text(text = stringResource(R.string.load_failed),
+        Text(
+            text = stringResource(R.string.load_failed),
             modifier = Modifier.clickable { onRetry() })
     }
 }
