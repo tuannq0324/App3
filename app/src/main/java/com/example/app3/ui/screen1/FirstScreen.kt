@@ -19,7 +19,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -47,23 +49,24 @@ fun FirstScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(bottom = 16.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         Crossfade(
-            modifier = Modifier.weight(1f), targetState = state, label = ""
+            modifier = Modifier
+                .wrapContentWidth()
+                .weight(1f), targetState = state, label = ""
         ) {
             when (it) {
                 ViewState.Loading -> {
-                    // Loading state - No changes needed
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = "Loading", modifier = Modifier.padding(16.dp))
+                        Text(text = "Loading ...", modifier = Modifier.padding(16.dp))
                         CircularProgressIndicator()
                     }
                 }
@@ -72,6 +75,7 @@ fun FirstScreen(
                     ImageGrid(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .padding(4.dp)
                             .padding(bottom = 16.dp),
                         items = items,
                         onSelect = viewModel::updateSelect,
@@ -104,13 +108,15 @@ fun ImageGrid(
     onSelect: (ImageViewItem) -> Unit = {},
     onLoadMore: () -> Unit = {}
 ) {
+    val gridState = rememberLazyStaggeredGridState()
+
     LazyVerticalStaggeredGrid(modifier = modifier,
         columns = StaggeredGridCells.Fixed(2),
         verticalItemSpacing = 4.dp,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        state = rememberLazyStaggeredGridState(),
+        state = gridState,
         content = {
-            items.forEachIndexed { index, imageViewItem ->
+            items.forEach { imageViewItem ->
                 when (imageViewItem) {
                     is ImageViewItem.Image -> {
                         item(key = imageViewItem.id) {
@@ -131,11 +137,19 @@ fun ImageGrid(
                     }
                 }
 
-                if (index == items.size - 1) {
-                    onLoadMore()
-                }
+//                if (index == items.size - 1) {
+//                    onLoadMore()
+//                }
             }
         })
+
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.layoutInfo.visibleItemsInfo }.collect { visibleItems ->
+            if (visibleItems.isNotEmpty() && visibleItems.last().index == gridState.layoutInfo.totalItemsCount - 1) {
+                onLoadMore()
+            }
+        }
+    }
 }
 
 // Composable for error state
@@ -157,8 +171,7 @@ fun ErrorState(onRetry: () -> Unit) {
             contentScale = ContentScale.Crop
         )
 
-        Text(
-            text = stringResource(R.string.load_failed),
+        Text(text = stringResource(R.string.load_failed),
             modifier = Modifier.clickable { onRetry() })
     }
 }

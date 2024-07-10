@@ -40,9 +40,7 @@ fun SecondScreen(
 
     App3Theme {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -71,7 +69,10 @@ fun SecondScreen(
                     })
                 }
             } else {
-                LazyVerticalStaggeredGrid(modifier = Modifier.fillMaxSize(),
+                LazyVerticalStaggeredGrid(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp),
                     columns = StaggeredGridCells.Fixed(2),
                     verticalItemSpacing = 4.dp,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
