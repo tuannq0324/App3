@@ -20,8 +20,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
-import coil.compose.SubcomposeAsyncImage
 import com.example.app3.R
 import com.example.app3.model.ImageViewItem
 
@@ -47,7 +45,7 @@ fun ItemImage(
                 },
             placeholder = placeholder,
             error = error,
-            model = item.item.item.urls.last(),
+            model = item.item.item.urls.elementAtOrElse(2) { 0 },
             contentDescription = "",
             contentScale = ContentScale.Crop
         )

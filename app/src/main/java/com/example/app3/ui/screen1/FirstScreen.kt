@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -52,7 +53,6 @@ fun FirstScreen(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
         Crossfade(
             modifier = Modifier
                 .wrapContentWidth()
@@ -107,11 +107,28 @@ fun ImageGrid(
     onSelect: (ImageViewItem) -> Unit = {},
     onLoadMore: () -> Unit = {}
 ) {
+    val state = rememberLazyStaggeredGridState()
+
+    LaunchedEffect(state, items.size) {
+        snapshotFlow {
+            state.firstVisibleItemIndex
+        }
+            .collect { firstVisibleItemIndex ->
+                val lastVisibleItemIndex = firstVisibleItemIndex + state.layoutInfo.visibleItemsInfo.size
+
+                val lastItem = items.lastOrNull()
+
+                if (lastVisibleItemIndex >= items.size && lastItem is ImageViewItem.Image) {
+                    onLoadMore()
+                }
+            }
+    }
+
     LazyVerticalStaggeredGrid(modifier = modifier,
         columns = StaggeredGridCells.Fixed(2),
         verticalItemSpacing = 4.dp,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        state = rememberLazyStaggeredGridState(),
+        state = state,
         content = {
             items.forEach { imageViewItem ->
                 when (imageViewItem) {
@@ -132,11 +149,6 @@ fun ImageGrid(
                             LoadMoreFailedItem(onLoadMore)
                         }
                     }
-                }
-            }
-            item(span = StaggeredGridItemSpan.FullLine) {
-                LaunchedEffect(key1 = true) {
-                    onLoadMore()
                 }
             }
         })

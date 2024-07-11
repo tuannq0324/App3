@@ -107,6 +107,7 @@ open class BaseViewModel(
     }
 
     fun loadMore() {
+
         if (loadMore.value == Loading) return
 
         updateLoadMoreState(Loading)
